@@ -17,46 +17,50 @@ class Router
 
     public function create(string $method, string $path, callable $handler, ?Auth $requiresAuth): void
     {
-        $normalizedPath = rtrim(parse_url($path, PHP_URL_PATH), '/');
+        $normalizedPath = $this->normalizePath($path);
         $this->routes[$method][$normalizedPath] = [
-            'handler' => $handler,
+            'callback' => $handler,
             'auth' => $requiresAuth,
         ];
     }
 
-    public function init(): void
+    public function init()
     {
-        $this->request = new Request();
-        $method = $this->request->getMethod();
-        $uri = rtrim(parse_url($this->request->getUri(), PHP_URL_PATH), '/');
+        $httpMethod = $_SERVER["REQUEST_METHOD"];
+        $requestUri = $_SERVER["REQUEST_URI"];
+        $request = new Request();
 
-        if (isset($this->routes[$method][$uri])) {
-            $route = $this->routes[$method][$uri];
-            $handler = $route['handler'];
-            $requiresAuth = $route['auth'];
+        $normalizedRequestUri = $this->normalizePath($requestUri);
 
-            if ($requiresAuth !== null) {
-                $authHeader = $this->request->getHeaders()['Authorization'] ?? null;
-                $token = null;
+        // Verifica se a rota existe
+        foreach ($this->routes[$httpMethod] as $path => $route) {
+            $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([^/]+)', $path);
+            $pattern = '/^' . str_replace('/', '\/', $pattern) . '$/';
 
-                if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-                    $token = $matches[1];
-                }
+            if (preg_match($pattern, $normalizedRequestUri, $matches)) {
+                array_shift($matches); // Remove o caminho completo
+                $params = $matches;
 
-                if (!$requiresAuth->getTokenExpiry($token)) {
+                $token = $request->getAuthorization();
+
+                // Verifica autenticação
+                if (!is_null($route['auth']) && !$route['auth']->isValidToken($token)) {
                     http_response_code(401);
-                    echo json_encode(['error' => 'Unauthorized']);
+                    echo json_encode([
+                        'status' => 401,
+                        'message' => 'Unauthorized'
+                    ]);
                     return;
                 }
 
-                // Aqui você pode decodificar o token e definir o usuário logado
-                // $this->userLogged = ...;
+                // Executa o callback da rota
+                return call_user_func_array($route['callback'], array_merge([$request], $params));
             }
-
-            call_user_func($handler, $this->request, $this->userLogged);
-            return;
         }
-        http_response_code(404);
-        echo json_encode(['error' => 'Not Found']);
+    }
+
+    private function normalizePath($path)
+    {
+        return rtrim(parse_url($path, PHP_URL_PATH), '/');
     }
 }

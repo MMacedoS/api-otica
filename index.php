@@ -5,5 +5,8 @@ require __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-echo "Hello, World!";
-echo " This is a sample PHP file.";
+date_default_timezone_set('America/Sao_Paulo');
+
+$router = require __DIR__ . '/src/Routers/web.php';
+
+$router->init();
