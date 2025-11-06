@@ -2,6 +2,9 @@
 
 namespace App\Config;
 
+use App\Repositories\Contracts\Users\IUsuarioRepository;
+use App\Repositories\Entities\Users\UsuarioRepository;
+
 class AppServiceProvider
 {
     public function __construct(Container $container)
@@ -15,5 +18,6 @@ class AppServiceProvider
         // Example:
         // $container->set(SomeService::class, new SomeService());
 
+        $container->set(IUsuarioRepository::class, new UsuarioRepository());
     }
 }

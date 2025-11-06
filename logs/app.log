@@ -14,3 +14,4 @@
 [2025-11-06T08:44:33.261598-03:00] app_logger.ERROR: Token validation error: Expired token [] []
 [2025-11-06T09:03:30.635528-03:00] app_logger.ERROR: Token validation error: Expired token [] []
 [2025-11-06T09:08:37.191796-03:00] app_logger.ERROR: Token validation error: Expired token [] []
+[2025-11-06T10:34:34.296374-03:00] app_logger.ERROR: Service App\Repositories\Contracts\Users\IUsuarioRepository not found in container. [] []

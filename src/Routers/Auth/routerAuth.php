@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+
+$authController = $container->get(AuthController::class);
+
 $router->create('POST', '/api/v1/auth', [$authController, 'login'], null);
 $router->create('GET', '/api/v1/protected-resource', function () {
     return json_response(['data' => 'This is protected data'], 200);

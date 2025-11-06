@@ -22,9 +22,40 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
         $this->conn = Database::getInstance()->getConnection();
     }
 
-    public function findAll()
+    public function findAll(array $params = []): array
     {
-        // Implementation here
+        $sql = "SELECT id_usuario as id, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
+                FROM " . self::TABLE . " 
+                WHERE ativo = 1";
+
+        $conditions = [];
+        $bindings = [];
+
+        if (isset($params['name_email'])) {
+            $conditions[] = "(nome LIKE :name_email or email LIKE :name_email)";
+            $bindings[':name_email'] = '%' . $params['name_email'] . '%';
+        }
+
+        if (isset($params['access']) && $params['access'] != '') {
+            $conditions[] = "acesso = :access";
+            $bindings[':access'] = $params['access'];
+        }
+
+        if (isset($params['situation']) && $params['situation'] != '') {
+            $conditions[] = "ativo = :situation";
+            $bindings[':situation'] = $params['situation'];
+        }
+
+        if (count($conditions) > 0) {
+            $sql .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $sql .= " ORDER BY nome DESC";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, self::CLASS_NAME);
+        return $stmt->fetchAll();
     }
 
     public function findByEmail(string $email) {}
