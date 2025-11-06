@@ -8,7 +8,7 @@ class Usuario
 {
     use UuidTrait;
 
-    public int $id;
+    public int $id_usuario;
     public string $uuid;
     public string $nome;
     public string $email;
@@ -20,24 +20,24 @@ class Usuario
 
     public function __construct() {}
 
-    public function toObject(array $fields): Usuario
+    public function prepareCreate(array $fields): Usuario
     {
-        $data = [];
-        foreach ($fields as $field) {
-            if (property_exists($this, $field)) {
-                $data[$field] = $this->$field;
+        $usuario = new Usuario();
+        foreach ($fields as $key => $field) {
+            if (array_key_exists($key, (array)$usuario)) {
+                continue;
             }
+            $usuario->$key = $field;
         }
-        $usuario = new Usuario(...array_values($data));
         $usuario->uuid = $this->generateUuid();
         $usuario->senha = $this->generatePassword($fields);
         return $usuario;
     }
 
-    public function toObjectExists(array $field, Usuario $usuario,  bool $forceNewPassword = false): Usuario
+    public function prepareUpdate(array $field, Usuario $usuario,  bool $forceNewPassword = false): Usuario
     {
         foreach ($field as $key => $value) {
-            if (property_exists($usuario, $key)) {
+            if (array_key_exists($key, (array)$usuario)) {
                 $usuario->$key = $value;
             }
         }
@@ -50,7 +50,7 @@ class Usuario
 
     private function generatePassword(array $data): string
     {
-        $password = !empty($data['password']) ? $data['password'] : 'password123';
+        $password = !empty($data['senha']) ? $data['senha'] : 'password123';
         return password_hash($password, PASSWORD_BCRYPT);
     }
 }

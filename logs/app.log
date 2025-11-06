@@ -15,3 +15,8 @@
 [2025-11-06T09:03:30.635528-03:00] app_logger.ERROR: Token validation error: Expired token [] []
 [2025-11-06T09:08:37.191796-03:00] app_logger.ERROR: Token validation error: Expired token [] []
 [2025-11-06T10:34:34.296374-03:00] app_logger.ERROR: Service App\Repositories\Contracts\Users\IUsuarioRepository not found in container. [] []
+[2025-11-06T10:57:59.337315-03:00] app_logger.ERROR: Token validation error: Expired token [] []
+[2025-11-06T12:23:31.349516-03:00] app_logger.ERROR: Token validation error: Expired token [] []
+[2025-11-06T12:47:30.580765-03:00] app_logger.ERROR: Token validation error: Expired token [] []
+[2025-11-06T13:21:12.923373-03:00] app_logger.ERROR: error ao cadastrar usuario ==> SQLSTATE[HY093]: Invalid parameter number: number of bound variables does not match number of tokens [] []
+[2025-11-06T16:48:13.440286-03:00] app_logger.ERROR: Token validation error: Expired token [] []

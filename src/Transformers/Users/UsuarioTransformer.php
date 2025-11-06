@@ -3,13 +3,16 @@
 namespace App\Transformers\Users;
 
 use App\Models\Users\Usuario;
+use App\Transformers\Traits\TransformerTrait;
 
 class UsuarioTransformer
 {
+    use TransformerTrait;
+
     public function transform(Usuario $data): array
     {
         return [
-            'id' => $data->id ?? null,
+            'id' => $data->id_usuario ?? null,
             'uuid' => $data->uuid ?? null,
             'name' => $data->nome ?? null,
             'email' => $data->email ?? null,
@@ -27,17 +30,23 @@ class UsuarioTransformer
         }, $data);
     }
 
-    public function keysTransform(): array
+    private function keysTransform(): array
     {
         return [
+            'code' => 'id_usuario',
             'id' => 'uuid',
-            'code' => 'id',
             'name' => 'nome',
             'email' => 'email',
             'access' => 'acesso',
             'active' => 'ativo',
+            'password' => 'senha',
             'created_at' => 'criado_em',
             'updated_at' => 'atualizado_em',
         ];
+    }
+
+    public function transformArray(array $data)
+    {
+        return $this->transformKeys($data, $this->keysTransform());
     }
 }

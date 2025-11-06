@@ -24,7 +24,7 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
 
     public function findAll(array $params = []): array
     {
-        $sql = "SELECT id_usuario as id, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
+        $sql = "SELECT id_usuario, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
                 FROM " . self::TABLE . " 
                 WHERE ativo = 1";
 
@@ -62,7 +62,54 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
 
     public function create(array $data)
     {
-        // Implementation here
+        if (empty($data)) {
+            return null;
+        }
+
+        $data = $this->model->prepareCreate($data);
+        $user = $this->user_exists($data);
+
+        if ($user) {
+            return $user;
+        }
+
+        $this->conn->beginTransaction();
+        try {
+            $stmt = $this->conn
+                ->prepare(
+                    "INSERT INTO " . self::TABLE .
+                        "
+                    SET
+                        uuid = :uuid,
+                        nome = :nome,
+                        email = :email,
+                        acesso = :acesso,
+                        senha = :senha
+                "
+                );
+
+            $created = $stmt->execute(
+                [
+                    ":uuid" => (string)$data->uuid,
+                    ":nome" => (string)$data->nome,
+                    "email" => (string)$data->email,
+                    "acesso" => (string)$data->acesso,
+                    "senha" => (string)$data->senha
+                ]
+            );
+
+            if ($created) {
+                $this->conn->commit();
+                return $this->findByUuid($data->uuid);
+            }
+
+            $this->conn->rollBack();
+            return null;
+        } catch (\Throwable $th) {
+            $this->conn->rollBack();
+            LoggerHelper::logError('error ao cadastrar usuario ==> ' . $th->getMessage());
+            return null;
+        }
     }
 
     public function update(int $id, array $data)
@@ -83,7 +130,7 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
 
         try {
             $stmt = $this->conn->prepare(
-                "SELECT id_usuario as id, senha, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
+                "SELECT id_usuario, senha, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
                     FROM " . self::TABLE . " 
                     WHERE email = :email 
                     and ativo = 1"
@@ -102,5 +149,24 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
             LoggerHelper::logError("Error during login: " . $th->getMessage());
             return null;
         }
+    }
+
+    public function user_exists(Usuario $user)
+    {
+        if (is_null($user)) {
+            return false;
+        }
+
+        $stmt = $this->conn
+            ->prepare(
+                "SELECT * FROM " . self::TABLE .
+                    " WHERE nome = :nome AND email = :email"
+            );
+
+        $stmt->bindParam(':email', $user->email, \PDO::PARAM_STR);
+        $stmt->bindParam(':nome', $user->nome, \PDO::PARAM_STR);
+        $stmt->execute();
+        $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, self::CLASS_NAME);
+        return $stmt->fetch();
     }
 }
