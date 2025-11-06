@@ -3,6 +3,7 @@
 namespace App\Config;
 
 use App\Config\Cors;
+use App\Services\AuthService;
 
 Cors::handle([
     $_ENV['CORS_ALLOWED_ORIGINS'] ?? 'http://localhost',
@@ -15,7 +16,7 @@ class Router
     protected $request = null;
     public $userLogged = null;
 
-    public function create(string $method, string $path, callable $handler, ?Auth $requiresAuth): void
+    public function create(string $method, string $path, callable $handler, ?AuthService $requiresAuth): void
     {
         $normalizedPath = $this->normalizePath($path);
         $this->routes[$method][$normalizedPath] = [
@@ -31,6 +32,13 @@ class Router
         $request = new Request();
 
         $normalizedRequestUri = $this->normalizePath($requestUri);
+
+        if (is_null($this->routes[$httpMethod] ?? null)) {
+            return json_response([
+                'status' => 404,
+                'message' => 'Route not found'
+            ], 404);
+        }
 
         // Verifica se a rota existe
         foreach ($this->routes[$httpMethod] as $path => $route) {

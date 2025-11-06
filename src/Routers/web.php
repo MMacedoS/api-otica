@@ -1,17 +1,22 @@
 <?php
 
-use App\Config\Auth;
+use App\Config\Container;
 use App\Config\Router;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Services\AuthService;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-
-
 $router = new Router();
-$auth = new Auth();
-$authController = new AuthController();
+$container = new Container();
+$authService = $container->get(AuthService::class);
 
-$router->create('GET', '/api/v1/auth/login/{id}/{token}', [$authController, 'login'], null);
+$authController = $container->get(AuthController::class);
+
+$router->create('GET', '/', function () {
+    return json_response(['message' => 'API is running'], 200);
+}, null);
+
+require_once __DIR__ . '/Auth/routerAuth.php';
 
 return $router;
