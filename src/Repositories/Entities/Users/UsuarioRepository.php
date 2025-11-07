@@ -24,7 +24,7 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
 
     public function findAll(array $params = []): array
     {
-        $sql = "SELECT id_usuario, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
+        $sql = "SELECT id, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
                 FROM " . self::TABLE . " 
                 WHERE ativo = 1";
 
@@ -92,9 +92,9 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
                 [
                     ":uuid" => (string)$data->uuid,
                     ":nome" => (string)$data->nome,
-                    "email" => (string)$data->email,
-                    "acesso" => (string)$data->acesso,
-                    "senha" => (string)$data->senha
+                    ":email" => (string)$data->email,
+                    ":acesso" => (string)$data->acesso,
+                    ":senha" => (string)$data->senha
                 ]
             );
 
@@ -114,12 +114,87 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
 
     public function update(int $id, array $data)
     {
-        // Implementation here
+        if (empty($data) || is_null($id)) {
+            return null;
+        }
+
+        $usuario = $this->findById($id);
+
+        if (is_null($usuario)) {
+            return null;
+        }
+
+        $user = $this->model->prepareUpdate($data, $usuario);
+
+        $this->conn->beginTransaction();
+        try {
+            $stmt = $this->conn
+                ->prepare(
+                    "UPDATE " . self::TABLE .
+                        "
+                    SET
+                        nome = :nome,
+                        email = :email,
+                        acesso = :acesso 
+                    WHERE
+                        id = :id
+                    "
+                );
+
+            $updated = $stmt->execute(
+                [
+                    ":nome" => (string)$user->nome,
+                    ":email" => (string)$user->email,
+                    ":acesso" => (string)$user->acesso,
+                    ":id" => $id
+                ]
+            );
+
+            if ($updated) {
+                $this->conn->commit();
+                return $this->findById($id);
+            }
+
+            $this->conn->rollBack();
+            return null;
+        } catch (\Throwable $th) {
+            $this->conn->rollBack();
+            LoggerHelper::logError('error ao atualizar usuario ==> ' . $th->getMessage());
+            return null;
+        }
     }
 
-    public function delete(int $id)
+    public function delete(int $id): bool
     {
-        // Implementation here
+        if (is_null($id)) {
+            return false;
+        }
+
+        $user = $this->findById((int)$id);
+
+        if (is_null($user)) {
+            return false;
+        }
+
+        $this->conn->beginTransaction();
+
+        try {
+
+            $stmt = $this->conn->prepare("DELETE FROM " . self::TABLE . " WHERE id=:id");
+            $deleted = $stmt->execute([":id" => (int)$user->id]);
+
+            if (!$deleted) {
+                $this->conn->rollBack();
+                return false;
+            }
+
+            $this->conn->commit();
+            return true;
+        } catch (\Throwable $th) {
+            $this->conn->rollBack();
+            LoggerHelper::logError("Erro ao tentar deletar usuario ==> " . $th->getMessage());
+            return false;
+        }
     }
 
     public function login(string $email): ?Usuario
@@ -130,7 +205,7 @@ class UsuarioRepository extends SingletonInstance implements IUsuarioRepository
 
         try {
             $stmt = $this->conn->prepare(
-                "SELECT id_usuario, senha, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
+                "SELECT id, senha, nome, email, acesso, ativo, uuid, criado_em, atualizado_em
                     FROM " . self::TABLE . " 
                     WHERE email = :email 
                     and ativo = 1"

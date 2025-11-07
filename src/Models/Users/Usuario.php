@@ -8,7 +8,7 @@ class Usuario
 {
     use UuidTrait;
 
-    public int $id_usuario;
+    public int $id;
     public string $uuid;
     public string $nome;
     public string $email;

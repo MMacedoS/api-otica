@@ -12,7 +12,7 @@ class UsuarioTransformer
     public function transform(Usuario $data): array
     {
         return [
-            'id' => $data->id_usuario ?? null,
+            'id' => $data->id ?? null,
             'uuid' => $data->uuid ?? null,
             'name' => $data->nome ?? null,
             'email' => $data->email ?? null,
@@ -33,7 +33,7 @@ class UsuarioTransformer
     private function keysTransform(): array
     {
         return [
-            'code' => 'id_usuario',
+            'code' => 'id',
             'id' => 'uuid',
             'name' => 'nome',
             'email' => 'email',

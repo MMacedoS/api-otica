@@ -75,4 +75,55 @@ class UsuarioController extends Controller
 
         return json_response($transformed, 201);
     }
+
+    public function update(Request $request, string $uuid)
+    {
+        $usuario = $this->usuarioRepository->findByUuid($uuid);
+
+        if (is_null($usuario)) {
+            return json_response("usuario não encontrado", 422);
+        }
+
+        $body = $request->getJsonBody();
+
+        $validator = new Validator($body);
+        $rules = [
+            'name' => 'required',
+            'email' => 'required',
+        ];
+
+        if (!$validator->validate($rules)) {
+            return json_response(['errors' => $validator->getErrors()], 422);
+        }
+
+        $params = $this->usuarioTransformer->transformArray($body);
+
+        $updated = $this->usuarioRepository->update($usuario->id, $params);
+
+        if (is_null($updated)) {
+            return null;
+        }
+
+        return json_response(
+            $this->usuarioTransformer->transform($updated),
+            202
+        );
+    }
+
+    public function destroy(Request $request, string $id)
+    {
+        $user = $this->usuarioRepository->findByUuid($id);
+
+        if (is_null($user)) {
+            return json_response("usuario não encontrado", 422);
+        }
+
+        $deleted = $this->usuarioRepository->delete((int)$user->id);
+
+        if (!$deleted) {
+            return json_response("Este usuario não pode ser deletado porque possui relacionamentos ativos", 422);
+        }
+
+        return json_response("Usuario deletado com sucesso", 200);
+    }
 }

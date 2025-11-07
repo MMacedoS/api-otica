@@ -28,7 +28,7 @@ trait FindTrait
 
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, static::CLASS_NAME);
         $register = $stmt->fetch();
-        if (is_null($register)) {
+        if (is_null($register) || !$register) {
             return null;
         }
 
@@ -45,7 +45,7 @@ trait FindTrait
 
         $stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, static::CLASS_NAME);
         $register = $stmt->fetch();
-        if (is_null($register)) {
+        if (is_null($register) || !$register) {
             return null;
         }
 
